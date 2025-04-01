@@ -58,5 +58,8 @@ public class UserService {
         if (!StringUtils.hasText(userRequest.password())) {
             throw new RuntimeException("Заполните пароль пользователя");
         }
+        if (userRequest.password().length() < 3) {
+            throw new RuntimeException("Минимальная длина пароля: 3 символа");
+        }
     }
 }
