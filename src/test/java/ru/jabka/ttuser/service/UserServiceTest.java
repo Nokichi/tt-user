@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import ru.jabka.ttuser.model.ServiceResponse;
 import ru.jabka.ttuser.model.User;
 import ru.jabka.ttuser.model.UserRequest;
+import ru.jabka.ttuser.model.UserResponse;
 import ru.jabka.ttuser.repository.UserRepository;
 
 import java.util.Collections;
@@ -36,8 +37,12 @@ class UserServiceTest {
                 .passwordHash(passwordEncoder.encode(userRequest.password()))
                 .build();
         Mockito.when(userRepository.insert(user)).thenReturn(user);
-        User result = userService.create(userRequest);
-        Assertions.assertEquals(user, result);
+        UserResponse expected = UserResponse.builder()
+                .id(user.id())
+                .username(user.username())
+                .build();
+        UserResponse result = userService.create(userRequest);
+        Assertions.assertEquals(expected, result);
         Mockito.verify(userRepository).insert(user);
     }
 
@@ -45,20 +50,27 @@ class UserServiceTest {
     void getById_success() {
         final User user = getValidUser();
         Mockito.when(userRepository.getById(user.id())).thenReturn(user);
-        User result = userService.getById(user.id());
-        Assertions.assertEquals(user, result);
+        UserResponse expected = UserResponse.builder()
+                .id(user.id())
+                .username(user.username())
+                .build();
+        UserResponse result = userService.getById(user.id());
+        Assertions.assertEquals(expected, result);
         Mockito.verify(userRepository).getById(user.id());
     }
 
     @Test
     void getAllByUsername_success() {
         final User user = getValidUser();
-        String usernameWrapper = "%" + user.username() + "%";
-        Mockito.when(userRepository.getAllByName(usernameWrapper))
+        Set<Long> ids = Set.of(user.id());
+        Mockito.when(userRepository.getAllByIds(ids))
                 .thenReturn(Collections.singletonList(user));
-        Set<User> userSet = userService.getAllByUsername(user.username());
-        Assertions.assertEquals(Set.of(user), userSet);
-        Mockito.verify(userRepository).getAllByName(usernameWrapper);
+        Set<UserResponse> userSet = userService.getAllByIds(ids);
+        Assertions.assertEquals(Set.of(UserResponse.builder()
+                .id(user.id())
+                .username(user.username())
+                .build()), userSet);
+        Mockito.verify(userRepository).getAllByIds(ids);
     }
 
     @Test

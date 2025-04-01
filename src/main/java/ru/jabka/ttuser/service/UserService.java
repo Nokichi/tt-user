@@ -9,9 +9,12 @@ import org.springframework.util.StringUtils;
 import ru.jabka.ttuser.model.ServiceResponse;
 import ru.jabka.ttuser.model.User;
 import ru.jabka.ttuser.model.UserRequest;
+import ru.jabka.ttuser.model.UserResponse;
 import ru.jabka.ttuser.repository.UserRepository;
 
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 
@@ -24,22 +27,36 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional(rollbackFor = Throwable.class)
-    public User create(final UserRequest userRequest) {
+    public UserResponse create(final UserRequest userRequest) {
         validateUserRequest(userRequest);
-        return userRepository.insert(User.builder()
+        User inserted = userRepository.insert(User.builder()
                 .username(userRequest.username())
                 .passwordHash(passwordEncoder.encode(userRequest.password()))
                 .build());
+        return UserResponse.builder()
+                .id(inserted.id())
+                .username(inserted.username())
+                .build();
     }
 
     @Transactional(readOnly = true)
-    public User getById(final Long id) {
-        return userRepository.getById(id);
+    public UserResponse getById(final Long id) {
+        User user = userRepository.getById(id);
+        return UserResponse.builder()
+                .id(user.id())
+                .username(user.username())
+                .build();
     }
 
     @Transactional(readOnly = true)
-    public Set<User> getAllByUsername(final String username) {
-        return Set.copyOf(userRepository.getAllByName("%" + username + "%"));
+    public Set<UserResponse> getAllByIds(final Set<Long> ids) {
+        List<User> userList = userRepository.getAllByIds(ids);
+        return userList.stream()
+                .map(x -> UserResponse.builder()
+                        .id(x.id())
+                        .username(x.username())
+                        .build())
+                .collect(Collectors.toSet());
     }
 
     @Transactional(rollbackFor = Throwable.class)

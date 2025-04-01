@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.jabka.ttuser.model.ServiceResponse;
-import ru.jabka.ttuser.model.User;
 import ru.jabka.ttuser.model.UserRequest;
+import ru.jabka.ttuser.model.UserResponse;
 import ru.jabka.ttuser.service.UserService;
 
 import java.util.Set;
@@ -26,18 +26,18 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public User create(@RequestBody final UserRequest userRequest) {
+    public UserResponse create(@RequestBody final UserRequest userRequest) {
         return userService.create(userRequest);
     }
 
     @GetMapping("/{id}")
-    public User getById(@PathVariable final Long id) {
+    public UserResponse getById(@PathVariable final Long id) {
         return userService.getById(id);
     }
 
     @GetMapping
-    public Set<User> getByUsername(@RequestParam final String username) {
-        return userService.getAllByUsername(username);
+    public Set<UserResponse> getUserListById(@RequestParam final Set<Long> ids) {
+        return userService.getAllByIds(ids);
     }
 
     @DeleteMapping("/{id}")

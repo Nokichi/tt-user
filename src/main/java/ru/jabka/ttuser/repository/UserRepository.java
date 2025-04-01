@@ -8,6 +8,7 @@ import ru.jabka.ttuser.model.User;
 import ru.jabka.ttuser.repository.mapper.UserMapper;
 
 import java.util.List;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -26,18 +27,21 @@ public class UserRepository {
             SELECT *
             FROM tt.user
             WHERE id = :id
+            AND is_deleted = false
             """;
 
-    private static final String GET_ALL_BY_NAME = """
+    private static final String GET_ALL_BY_IDS = """
             SELECT *
             FROM tt.user
-            WHERE username LIKE :username
+            WHERE id IN (:ids)
+            AND is_deleted = false
             """;
 
     private static final String DELETE = """
             UPDATE tt.user
             SET is_deleted = true, deleted_at = CURRENT_TIMESTAMP
             WHERE id = :id
+            AND is_deleted = false
             RETURNING *
             """;
 
@@ -53,8 +57,8 @@ public class UserRepository {
         }
     }
 
-    public List<User> getAllByName(final String username) {
-        return jdbcTemplate.query(GET_ALL_BY_NAME, new MapSqlParameterSource("username", username), userMapper);
+    public List<User> getAllByIds(final Set<Long> ids) {
+        return jdbcTemplate.query(GET_ALL_BY_IDS, new MapSqlParameterSource("ids", ids), userMapper);
     }
 
     public User delete(final Long id) {
