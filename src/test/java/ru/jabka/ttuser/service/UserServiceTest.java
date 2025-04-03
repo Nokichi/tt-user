@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import ru.jabka.ttuser.exception.BadRequestException;
 import ru.jabka.ttuser.model.ServiceResponse;
 import ru.jabka.ttuser.model.User;
 import ru.jabka.ttuser.model.UserRequest;
@@ -87,8 +88,8 @@ class UserServiceTest {
 
     @Test
     void create_error_nullRequest() {
-        final RuntimeException exception = Assertions.assertThrows(
-                RuntimeException.class,
+        final BadRequestException exception = Assertions.assertThrows(
+                BadRequestException.class,
                 () -> userService.create(null)
         );
         Assertions.assertEquals("Введите информацию о пользователе", exception.getMessage());
@@ -98,8 +99,8 @@ class UserServiceTest {
     @Test
     void create_error_nullUsername() {
         final UserRequest userRequest = new UserRequest(null, "pass");
-        final RuntimeException exception = Assertions.assertThrows(
-                RuntimeException.class,
+        final BadRequestException exception = Assertions.assertThrows(
+                BadRequestException.class,
                 () -> userService.create(userRequest)
         );
         Assertions.assertEquals("Заполните имя пользователя", exception.getMessage());
@@ -109,8 +110,8 @@ class UserServiceTest {
     @Test
     void create_error_nullPassword() {
         final UserRequest userRequest = new UserRequest("name", null);
-        final RuntimeException exception = Assertions.assertThrows(
-                RuntimeException.class,
+        final BadRequestException exception = Assertions.assertThrows(
+                BadRequestException.class,
                 () -> userService.create(userRequest)
         );
         Assertions.assertEquals("Заполните пароль пользователя", exception.getMessage());
@@ -120,8 +121,8 @@ class UserServiceTest {
     @Test
     void create_error_shortPassword() {
         final UserRequest userRequest = new UserRequest("name", "12");
-        final RuntimeException exception = Assertions.assertThrows(
-                RuntimeException.class,
+        final BadRequestException exception = Assertions.assertThrows(
+                BadRequestException.class,
                 () -> userService.create(userRequest)
         );
         Assertions.assertEquals("Минимальная длина пароля: 3 символа", exception.getMessage());

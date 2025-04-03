@@ -6,6 +6,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import ru.jabka.ttuser.exception.BadRequestException;
 import ru.jabka.ttuser.model.ServiceResponse;
 import ru.jabka.ttuser.model.User;
 import ru.jabka.ttuser.model.UserRequest;
@@ -68,15 +69,15 @@ public class UserService {
     }
 
     private void validateUserRequest(final UserRequest userRequest) {
-        ofNullable(userRequest).orElseThrow(() -> new RuntimeException("Введите информацию о пользователе"));
+        ofNullable(userRequest).orElseThrow(() -> new BadRequestException("Введите информацию о пользователе"));
         if (!StringUtils.hasText(userRequest.username())) {
-            throw new RuntimeException("Заполните имя пользователя");
+            throw new BadRequestException("Заполните имя пользователя");
         }
         if (!StringUtils.hasText(userRequest.password())) {
-            throw new RuntimeException("Заполните пароль пользователя");
+            throw new BadRequestException("Заполните пароль пользователя");
         }
         if (userRequest.password().length() < 3) {
-            throw new RuntimeException("Минимальная длина пароля: 3 символа");
+            throw new BadRequestException("Минимальная длина пароля: 3 символа");
         }
     }
 }

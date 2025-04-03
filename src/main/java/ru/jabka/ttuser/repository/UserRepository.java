@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
+import ru.jabka.ttuser.exception.BadRequestException;
 import ru.jabka.ttuser.model.User;
 import ru.jabka.ttuser.repository.mapper.UserMapper;
 
@@ -53,7 +54,7 @@ public class UserRepository {
         try {
             return jdbcTemplate.queryForObject(GET_BY_ID, new MapSqlParameterSource("id", id), userMapper);
         } catch (Throwable e) {
-            throw new RuntimeException(String.format("Пользователь с id %d не найден", id));
+            throw new BadRequestException(String.format("Пользователь с id %d не найден", id));
         }
     }
 
