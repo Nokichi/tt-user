@@ -1,5 +1,6 @@
 package ru.jabka.ttuser.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,21 +27,25 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
+    @Operation(summary = "Создание нового пользователя")
     public UserResponse create(@RequestBody final UserRequest userRequest) {
         return userService.create(userRequest);
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Получение пользователя по ID")
     public UserResponse getById(@PathVariable final Long id) {
         return userService.getById(id);
     }
 
     @GetMapping
-    public Set<UserResponse> getUserListById(@RequestParam final Set<Long> ids) {
+    @Operation(summary = "Получение списка пользователей по множеству ID")
+    public Set<UserResponse> getListById(@RequestParam final Set<Long> ids) {
         return userService.getAllByIds(ids);
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Удаление пользователя по ID")
     public ServiceResponse delete(@PathVariable final Long id) {
         return userService.delete(id);
     }
