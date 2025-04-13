@@ -6,8 +6,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import ru.jabka.ttuser.client.TaskClient;
 import ru.jabka.ttuser.exception.BadRequestException;
 import ru.jabka.ttuser.model.ServiceResponse;
+import ru.jabka.ttuser.model.Status;
+import ru.jabka.ttuser.model.Task;
 import ru.jabka.ttuser.model.User;
 import ru.jabka.ttuser.model.UserRequest;
 import ru.jabka.ttuser.model.UserResponse;
@@ -26,6 +29,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TaskClient taskClient;
 
     @Transactional(rollbackFor = Throwable.class)
     public UserResponse create(final UserRequest userRequest) {
@@ -62,6 +66,7 @@ public class UserService {
 
     @Transactional(rollbackFor = Throwable.class)
     public ServiceResponse delete(final Long id) {
+        checkActiveUserTasks(id);
         userRepository.delete(id);
         return ServiceResponse.builder()
                 .success(true)
@@ -78,6 +83,15 @@ public class UserService {
         }
         if (userRequest.password().length() < 3) {
             throw new BadRequestException("Минимальная длина пароля: 3 символа");
+        }
+    }
+
+    private void checkActiveUserTasks(final Long userId) {
+        Set<Status> activeStatuses = Set.of(Status.TO_DO, Status.IN_PROGRESS);
+        for (Task task : taskClient.getTasksByAssigneeId(userId)) {
+            if (activeStatuses.contains(task.status())) {
+                throw new BadRequestException(String.format("Присутствуют незавершенные задачи, назначенные на пользователя ID = %s", userId));
+            }
         }
     }
 }

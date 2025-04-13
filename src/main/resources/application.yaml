@@ -8,3 +8,5 @@ spring:
     url: jdbc:postgresql://localhost:5432/tt_user
     username: test
     password: ${DB_PG_PWD}
+services:
+  task-service-url: http://localhost:8080
