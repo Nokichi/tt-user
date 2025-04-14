@@ -36,10 +36,12 @@ public class UserService {
         validateUserRequest(userRequest);
         User inserted = userRepository.insert(User.builder()
                 .username(userRequest.username())
+                .role(userRequest.role())
                 .passwordHash(passwordEncoder.encode(userRequest.password()))
                 .build());
         return UserResponse.builder()
                 .id(inserted.id())
+                .role(inserted.role())
                 .username(inserted.username())
                 .build();
     }
@@ -49,6 +51,7 @@ public class UserService {
         User user = userRepository.getById(id);
         return UserResponse.builder()
                 .id(user.id())
+                .role(user.role())
                 .username(user.username())
                 .build();
     }
@@ -60,6 +63,7 @@ public class UserService {
                 .map(x -> UserResponse.builder()
                         .id(x.id())
                         .username(x.username())
+                        .role(x.role())
                         .build())
                 .collect(Collectors.toSet());
     }
@@ -84,6 +88,7 @@ public class UserService {
         if (userRequest.password().length() < 3) {
             throw new BadRequestException("Минимальная длина пароля: 3 символа");
         }
+        ofNullable(userRequest.role()).orElseThrow(() -> new BadRequestException("Заполните роль пользователя"));
     }
 
     private void checkActiveUserTasks(final Long userId) {
