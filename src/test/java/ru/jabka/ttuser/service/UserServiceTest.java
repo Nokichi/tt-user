@@ -10,16 +10,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import ru.jabka.ttuser.client.TaskClient;
 import ru.jabka.ttuser.exception.BadRequestException;
+import ru.jabka.ttuser.model.Role;
 import ru.jabka.ttuser.model.ServiceResponse;
-import ru.jabka.ttuser.model.Status;
-import ru.jabka.ttuser.model.Task;
 import ru.jabka.ttuser.model.User;
 import ru.jabka.ttuser.model.UserRequest;
 import ru.jabka.ttuser.model.UserResponse;
 import ru.jabka.ttuser.repository.UserRepository;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,15 +37,17 @@ class UserServiceTest {
 
     @Test
     void create_success() {
-        final UserRequest userRequest = new UserRequest("Test", "test123Pass&6");
+        final UserRequest userRequest = new UserRequest("Test", "test123Pass&6", Role.MANAGER);
         final User user = User.builder()
                 .username(userRequest.username())
                 .passwordHash(passwordEncoder.encode(userRequest.password()))
+                .role(Role.MANAGER)
                 .build();
         Mockito.when(userRepository.insert(user)).thenReturn(user);
         UserResponse expected = UserResponse.builder()
                 .id(user.id())
                 .username(user.username())
+                .role(Role.MANAGER)
                 .build();
         UserResponse result = userService.create(userRequest);
         Assertions.assertEquals(expected, result);
@@ -84,7 +84,7 @@ class UserServiceTest {
     @Test
     void delete_success_no_tasks() {
         final User user = getValidUser();
-        Mockito.when(taskClient.getTasksByAssigneeId(user.id())).thenReturn(Collections.emptyList());
+        Mockito.when(taskClient.existsActiveTasksByAssignee(user.id())).thenReturn(false);
         Mockito.when(userRepository.delete(user.id())).thenReturn(user);
         ServiceResponse serviceResponse = userService.delete(user.id());
         ServiceResponse expected = ServiceResponse.builder()
@@ -97,11 +97,7 @@ class UserServiceTest {
     @Test
     void delete_success_done_tasks() {
         final User user = getValidUser();
-        final Task closedTasks = Task.builder()
-                .id(2L)
-                .status(Status.DONE)
-                .build();
-        Mockito.when(taskClient.getTasksByAssigneeId(user.id())).thenReturn(List.of(closedTasks));
+        Mockito.when(taskClient.existsActiveTasksByAssignee(user.id())).thenReturn(false);
         Mockito.when(userRepository.delete(user.id())).thenReturn(user);
         ServiceResponse serviceResponse = userService.delete(user.id());
         ServiceResponse expected = ServiceResponse.builder()
@@ -114,11 +110,7 @@ class UserServiceTest {
     @Test
     void delete_success_deleted_tasks() {
         final User user = getValidUser();
-        final Task closedTasks = Task.builder()
-                .id(2L)
-                .status(Status.DELETED)
-                .build();
-        Mockito.when(taskClient.getTasksByAssigneeId(user.id())).thenReturn(List.of(closedTasks));
+        Mockito.when(taskClient.existsActiveTasksByAssignee(user.id())).thenReturn(false);
         Mockito.when(userRepository.delete(user.id())).thenReturn(user);
         ServiceResponse serviceResponse = userService.delete(user.id());
         ServiceResponse expected = ServiceResponse.builder()
@@ -140,7 +132,7 @@ class UserServiceTest {
 
     @Test
     void create_error_nullUsername() {
-        final UserRequest userRequest = new UserRequest(null, "pass");
+        final UserRequest userRequest = new UserRequest(null, "pass", Role.USER);
         final BadRequestException exception = Assertions.assertThrows(
                 BadRequestException.class,
                 () -> userService.create(userRequest)
@@ -151,7 +143,7 @@ class UserServiceTest {
 
     @Test
     void create_error_nullPassword() {
-        final UserRequest userRequest = new UserRequest("name", null);
+        final UserRequest userRequest = new UserRequest("name", null, Role.USER);
         final BadRequestException exception = Assertions.assertThrows(
                 BadRequestException.class,
                 () -> userService.create(userRequest)
@@ -162,7 +154,7 @@ class UserServiceTest {
 
     @Test
     void create_error_shortPassword() {
-        final UserRequest userRequest = new UserRequest("name", "12");
+        final UserRequest userRequest = new UserRequest("name", "12", Role.USER);
         final BadRequestException exception = Assertions.assertThrows(
                 BadRequestException.class,
                 () -> userService.create(userRequest)
@@ -172,29 +164,9 @@ class UserServiceTest {
     }
 
     @Test
-    void delete_error_todo_task_exists() {
+    void delete_error_active_task_exists() {
         Long userId = 1L;
-        final Task activeTask = Task.builder()
-                .id(2L)
-                .status(Status.TO_DO)
-                .build();
-        Mockito.when(taskClient.getTasksByAssigneeId(userId)).thenReturn(List.of(activeTask));
-        final BadRequestException exception = Assertions.assertThrows(
-                BadRequestException.class,
-                () -> userService.delete(userId)
-        );
-        Assertions.assertEquals(String.format("Присутствуют незавершенные задачи, назначенные на пользователя ID = %s", userId), exception.getMessage());
-        Mockito.verify(userRepository, Mockito.never()).delete(Mockito.any());
-    }
-
-    @Test
-    void delete_error_in_progress_task_exists() {
-        Long userId = 1L;
-        final Task activeTask = Task.builder()
-                .id(2L)
-                .status(Status.IN_PROGRESS)
-                .build();
-        Mockito.when(taskClient.getTasksByAssigneeId(userId)).thenReturn(List.of(activeTask));
+        Mockito.when(taskClient.existsActiveTasksByAssignee(userId)).thenReturn(true);
         final BadRequestException exception = Assertions.assertThrows(
                 BadRequestException.class,
                 () -> userService.delete(userId)

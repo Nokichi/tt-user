@@ -9,8 +9,6 @@ import org.springframework.util.StringUtils;
 import ru.jabka.ttuser.client.TaskClient;
 import ru.jabka.ttuser.exception.BadRequestException;
 import ru.jabka.ttuser.model.ServiceResponse;
-import ru.jabka.ttuser.model.Status;
-import ru.jabka.ttuser.model.Task;
 import ru.jabka.ttuser.model.User;
 import ru.jabka.ttuser.model.UserRequest;
 import ru.jabka.ttuser.model.UserResponse;
@@ -92,11 +90,8 @@ public class UserService {
     }
 
     private void checkActiveUserTasks(final Long userId) {
-        Set<Status> activeStatuses = Set.of(Status.TO_DO, Status.IN_PROGRESS);
-        for (Task task : taskClient.getTasksByAssigneeId(userId)) {
-            if (activeStatuses.contains(task.status())) {
-                throw new BadRequestException(String.format("Присутствуют незавершенные задачи, назначенные на пользователя ID = %s", userId));
-            }
+        if (taskClient.existsActiveTasksByAssignee(userId)) {
+            throw new BadRequestException(String.format("Присутствуют незавершенные задачи, назначенные на пользователя ID = %s", userId));
         }
     }
 }
