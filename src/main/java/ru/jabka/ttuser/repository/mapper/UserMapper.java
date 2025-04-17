@@ -2,6 +2,7 @@ package ru.jabka.ttuser.repository.mapper;
 
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
+import ru.jabka.ttuser.model.Role;
 import ru.jabka.ttuser.model.User;
 
 import java.sql.ResultSet;
@@ -19,6 +20,7 @@ public class UserMapper implements RowMapper<User> {
                 .id(rs.getLong("id"))
                 .username(rs.getString("username"))
                 .passwordHash(rs.getString("password_hash"))
+                .role(Role.byId(rs.getLong("role_id")))
                 .isDeleted(rs.getBoolean("is_deleted"))
                 .createdAt(rs.getObject("created_at", Timestamp.class).toLocalDateTime())
                 .updatedAt(rs.getObject("updated_at", Timestamp.class).toLocalDateTime());

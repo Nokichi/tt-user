@@ -6,6 +6,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import ru.jabka.ttuser.client.TaskClient;
 import ru.jabka.ttuser.exception.BadRequestException;
 import ru.jabka.ttuser.model.ServiceResponse;
 import ru.jabka.ttuser.model.User;
@@ -26,16 +27,19 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TaskClient taskClient;
 
     @Transactional(rollbackFor = Throwable.class)
     public UserResponse create(final UserRequest userRequest) {
         validateUserRequest(userRequest);
         User inserted = userRepository.insert(User.builder()
                 .username(userRequest.username())
+                .role(userRequest.role())
                 .passwordHash(passwordEncoder.encode(userRequest.password()))
                 .build());
         return UserResponse.builder()
                 .id(inserted.id())
+                .role(inserted.role())
                 .username(inserted.username())
                 .build();
     }
@@ -45,6 +49,7 @@ public class UserService {
         User user = userRepository.getById(id);
         return UserResponse.builder()
                 .id(user.id())
+                .role(user.role())
                 .username(user.username())
                 .build();
     }
@@ -56,12 +61,14 @@ public class UserService {
                 .map(x -> UserResponse.builder()
                         .id(x.id())
                         .username(x.username())
+                        .role(x.role())
                         .build())
                 .collect(Collectors.toSet());
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public ServiceResponse delete(final Long id) {
+        checkActiveUserTasks(id);
         userRepository.delete(id);
         return ServiceResponse.builder()
                 .success(true)
@@ -78,6 +85,13 @@ public class UserService {
         }
         if (userRequest.password().length() < 3) {
             throw new BadRequestException("Минимальная длина пароля: 3 символа");
+        }
+        ofNullable(userRequest.role()).orElseThrow(() -> new BadRequestException("Заполните роль пользователя"));
+    }
+
+    private void checkActiveUserTasks(final Long userId) {
+        if (taskClient.existsActiveTasksByAssignee(userId)) {
+            throw new BadRequestException(String.format("Присутствуют незавершенные задачи, назначенные на пользователя ID = %s", userId));
         }
     }
 }
