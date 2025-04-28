@@ -10,6 +10,7 @@ public record User(
         String username,
         String passwordHash,
         Boolean isDeleted,
+        Role role,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         LocalDateTime deletedAt

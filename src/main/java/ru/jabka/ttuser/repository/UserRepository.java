@@ -19,8 +19,8 @@ public class UserRepository {
     private final UserMapper userMapper;
 
     private static final String INSERT = """
-            INSERT INTO tt.user (username, password_hash)
-            VALUES (:username, :password_hash)
+            INSERT INTO tt.user (username, password_hash, role_id)
+            VALUES (:username, :password_hash, :role_id)
             RETURNING *
             """;
 
@@ -71,6 +71,7 @@ public class UserRepository {
                 .addValue("id", user.id())
                 .addValue("username", user.username())
                 .addValue("password_hash", user.passwordHash())
+                .addValue("role_id", user.role().getId())
                 .addValue("is_deleted", user.isDeleted())
                 .addValue("created_at", user.createdAt())
                 .addValue("updated_at", user.updatedAt())
