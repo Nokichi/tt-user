@@ -10,3 +10,4 @@ spring:
     password: ${DB_PG_PWD}
 services:
   task-service-url: http://localhost:8080
+  team-service-url: http://localhost:8084
