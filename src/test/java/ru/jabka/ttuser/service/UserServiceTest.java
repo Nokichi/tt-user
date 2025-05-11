@@ -9,6 +9,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import ru.jabka.ttuser.client.TaskClient;
+import ru.jabka.ttuser.client.TeamClient;
 import ru.jabka.ttuser.exception.BadRequestException;
 import ru.jabka.ttuser.model.Role;
 import ru.jabka.ttuser.model.ServiceResponse;
@@ -31,6 +32,9 @@ class UserServiceTest {
 
     @Mock
     private TaskClient taskClient;
+
+    @Mock
+    private TeamClient teamClient;
 
     @InjectMocks
     private UserService userService;
@@ -172,6 +176,19 @@ class UserServiceTest {
                 () -> userService.delete(userId)
         );
         Assertions.assertEquals(String.format("Присутствуют незавершенные задачи, назначенные на пользователя ID = %s", userId), exception.getMessage());
+        Mockito.verify(userRepository, Mockito.never()).delete(Mockito.any());
+    }
+
+    @Test
+    void delete_error_user_is_team_owner() {
+        Long userId = 1L;
+        Mockito.when(taskClient.existsActiveTasksByAssignee(userId)).thenReturn(false);
+        Mockito.when(teamClient.existsByOwnerId(userId)).thenReturn(true);
+        final BadRequestException exception = Assertions.assertThrows(
+                BadRequestException.class,
+                () -> userService.delete(userId)
+        );
+        Assertions.assertEquals(String.format("Пользователь ID = %s является владельцем активной команды и не может быть удален", userId), exception.getMessage());
         Mockito.verify(userRepository, Mockito.never()).delete(Mockito.any());
     }
 

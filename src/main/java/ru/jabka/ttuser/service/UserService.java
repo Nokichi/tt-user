@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import ru.jabka.ttuser.client.TaskClient;
+import ru.jabka.ttuser.client.TeamClient;
 import ru.jabka.ttuser.exception.BadRequestException;
 import ru.jabka.ttuser.model.ServiceResponse;
 import ru.jabka.ttuser.model.User;
@@ -28,6 +29,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TaskClient taskClient;
+    private final TeamClient teamClient;
 
     @Transactional(rollbackFor = Throwable.class)
     public UserResponse create(final UserRequest userRequest) {
@@ -69,6 +71,7 @@ public class UserService {
     @Transactional(rollbackFor = Throwable.class)
     public ServiceResponse delete(final Long id) {
         checkActiveUserTasks(id);
+        checkTeamOwner(id);
         userRepository.delete(id);
         return ServiceResponse.builder()
                 .success(true)
@@ -92,6 +95,12 @@ public class UserService {
     private void checkActiveUserTasks(final Long userId) {
         if (taskClient.existsActiveTasksByAssignee(userId)) {
             throw new BadRequestException(String.format("Присутствуют незавершенные задачи, назначенные на пользователя ID = %s", userId));
+        }
+    }
+
+    private void checkTeamOwner(final Long userId) {
+        if (teamClient.existsByOwnerId(userId)) {
+            throw new BadRequestException(String.format("Пользователь ID = %s является владельцем активной команды и не может быть удален", userId));
         }
     }
 }

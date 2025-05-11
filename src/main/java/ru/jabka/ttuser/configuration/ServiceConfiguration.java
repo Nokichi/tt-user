@@ -13,11 +13,21 @@ import org.springframework.web.util.DefaultUriBuilderFactory;
 public class ServiceConfiguration {
 
     private String taskServiceUrl;
+    private String teamServiceUrl;
 
     @Bean
     public RestTemplate taskServiceRestTemplate() {
+        return initService(taskServiceUrl);
+    }
+
+    @Bean
+    public RestTemplate teamServiceRestTemplate() {
+        return initService(teamServiceUrl);
+    }
+
+    private RestTemplate initService(final String url) {
         RestTemplate restTemplate = new RestTemplate();
-        restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory(taskServiceUrl));
+        restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory(url));
         return restTemplate;
     }
 }
